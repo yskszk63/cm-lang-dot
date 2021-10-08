@@ -1,0 +1,31 @@
+{
+  "name": "lang-dot",
+  "version": "0.1.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "prepare": "cm-buildhelper src/index.ts",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "type": "module",
+  "exports": {
+    "import": "./dist/index.js"
+  },
+  "types": "dist/index.d.ts",
+  "module": "dist/index.js",
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "lezer-dot": "0.1.0",
+    "@codemirror/autocomplete": "^0.19.0",
+    "@codemirror/highlight": "^0.19.6",
+    "@codemirror/language": "^0.19.0",
+    "@codemirror/lint": "^0.19.0",
+    "@codemirror/state": "^0.19.0",
+    "@codemirror/view": "^0.19.0"
+  },
+  "devDependencies": {
+    "@codemirror/buildhelper": "^0.1.5",
+    "@lezer/lr": "^0.15.0"
+  }
+}

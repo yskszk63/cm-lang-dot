@@ -1,0 +1,105 @@
+// https://graphviz.org/doc/info/lang.html
+
+@top graph {
+  kwstrict? (kwgraph | kwdigraph) ID? "{" stmt_list "}"
+}
+
+stmt_list {
+  (stmt ";"?)*
+}
+
+stmt[@isGroup=Stmt] {
+    node_stmt
+  | edge_stmt
+  | attr_stmt
+  | Prop { ID "=" ID }
+  | subgraph
+}
+
+attr_stmt[@name=AttrStmt] {
+  (kwgraph | kwnode | kwedge) attr_list
+}
+
+attr_list {
+  ("[" a_list? "]")+
+}
+
+a_list {
+  ( Attr { ID "=" ID } (";" | ",")?)+
+}
+
+edge_stmt[@name=EdgeStmt] {
+  (node_id | subgraph) edgeRHS attr_list?
+}
+
+edgeRHS {
+  (edgeop (node_id | subgraph))+
+}
+
+node_stmt[@name=NodeStmt] {
+  node_id attr_list?
+}
+
+node_id {
+  ID port?
+}
+
+port {
+    ":" ID (":" compass_pt)?
+  | ":" compass_pt
+}
+
+compass_pt[@name=CompassPt] {
+  @extend<simpleid, "n" | "ne" | "e" | "se" | "s" | "sw" | "w" | "nw" | "c" | "_">
+}
+
+subgraph[@name=Subgraph] {
+  (kwsubgraph ID?)? "{" stmt_list "}"
+}
+
+ID {
+    simpleid
+  | numeral
+  | quoted
+  | htmlstr
+}
+
+@precedence {
+  kwstrict,
+  kwgraph,
+  kwdigraph,
+  kwedge,
+  kwnode,
+  kwsubgraph,
+  simpleid
+}
+
+kwstrict[@name=strict] { @specialize<simpleid, "strict"> }
+kwgraph[@name=graph] { @specialize<simpleid, "graph"> }
+kwdigraph[@name=digraph] { @specialize<simpleid, "digraph"> }
+kwedge[@name=edge] { @specialize<simpleid, "edge"> }
+kwnode[@name=node] { @specialize<simpleid, "node"> }
+kwsubgraph[@name=subgraph] { @specialize<simpleid, "subgraph"> }
+
+@skip { spaces | newline }
+
+@tokens {
+  spaces[@export] { $[\u0009 \u000b\u00a0\u1680\u2000-\u200a\u202f\u205f\u3000\ufeff]+ }
+  newline[@export] { $[\r\n\u2028\u2029] }
+
+  alphabetic { $[a-zA-Z\u{200}-\u{377}] }
+  underscores { "_" }
+  digits { $[0-9] }
+
+  simpleid { (alphabetic | underscores) (alphabetic | underscores | digits)* }
+
+  numeral { "-"? ("." digits+ | digits+ ("." digits*)?) }
+
+  quoted { '"' (![\\\n"] | "\\" _)* '"' }
+
+  htmlstr { '<' (![>])* '>' }
+
+  edgeop {
+    "->" | "--"
+  }
+}

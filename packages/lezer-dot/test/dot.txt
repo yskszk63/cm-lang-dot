@@ -1,0 +1,127 @@
+# minimum
+
+graph { }
+
+==>
+
+graph(graph)
+
+# minimum with id
+
+graph id { }
+
+==>
+
+graph(graph, ID)
+
+# minimum with quoted id
+
+graph "\"" { }
+
+==>
+
+graph(graph, ID)
+
+# minimum with numeral id
+
+graph 3.14 { }
+
+==>
+
+graph(graph, ID)
+
+# minimum with html id
+
+graph <html> { }
+
+==>
+
+graph(graph, ID)
+
+# with node_stmt
+
+graph T { n }
+
+==>
+
+graph(graph, ID, NodeStmt(ID))
+
+# with node_stmt with port
+
+graph T { n:p }
+
+==>
+
+graph(graph, ID, NodeStmt(ID, ID))
+
+# with node_stmt with port and compass
+
+graph T { n:p:n }
+
+==>
+
+graph(graph, ID, NodeStmt(ID, ID, CompassPt))
+
+# with edge_stmt
+
+graph T { n -> ne }
+
+==>
+
+graph(graph, ID, EdgeStmt(ID, ID))
+
+# with edge_stmt with subgraph
+
+graph T { {} -> {} }
+
+==>
+
+graph(graph, ID, EdgeStmt(Subgraph, Subgraph))
+
+# with edge_stmt with attr
+
+graph T { n -> ne [color=blue] }
+
+==>
+
+graph(graph, ID, EdgeStmt(ID, ID, Attr(ID, ID)))
+
+# with attr_stmt graph
+
+graph T { graph [color=blue] }
+
+==>
+
+graph(graph, ID, AttrStmt(graph, Attr(ID, ID)))
+
+# with attr_stmt edge
+
+graph T { edge [color=blue] }
+
+==>
+
+graph(graph, ID, AttrStmt(edge, Attr(ID, ID)))
+
+# with attr_stmt node
+
+graph T { node [color=blue] }
+
+==>
+
+graph(graph, ID, AttrStmt(node, Attr(ID, ID)))
+
+# with prop
+
+graph T { color=blue }
+
+==>
+
+graph(graph, ID, Prop(ID, ID))
+
+# with subgraph
+
+graph T { { a -- b } }
+
+==>
+
+graph(graph, ID, Subgraph(EdgeStmt(ID, ID)))

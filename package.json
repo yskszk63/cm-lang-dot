@@ -1,0 +1,8 @@
+{
+  "name": "cm-lang-dot",
+  "private": true,
+  "license": "MIT",
+  "workspaces": [
+    "packages/*"
+  ]
+}
