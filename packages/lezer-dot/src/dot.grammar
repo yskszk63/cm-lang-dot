@@ -28,7 +28,7 @@ a_list {
   ( Attr { ID "=" ID } (";" | ",")?)+
 }
 
-EdgeStmt[@name=EdgeStmt] {
+EdgeStmt {
   (node_id | Subgraph) edgeRHS attr_list?
 }
 
@@ -45,11 +45,11 @@ node_id {
 }
 
 port {
-    ":" ID (":" compass_pt)?
-  | ":" compass_pt
+    ":" ID (":" CompassPt)?
+  | ":" CompassPt
 }
 
-compass_pt[@name=CompassPt] {
+CompassPt {
   @extend<Simpleid, "n" | "ne" | "e" | "se" | "s" | "sw" | "w" | "nw" | "c" | "_">
 }
 
@@ -81,11 +81,20 @@ kwedge[@name=edge] { @specialize<Simpleid, "edge"> }
 kwnode[@name=node] { @specialize<Simpleid, "node"> }
 kwsubgraph[@name=subgraph] { @specialize<Simpleid, "subgraph"> }
 
-@skip { spaces | newline }
+@skip { spaces | newline | LineComment | BlockComment | SharpComment}
 
 @tokens {
   spaces[@export] { $[\u0009 \u000b\u00a0\u1680\u2000-\u200a\u202f\u205f\u3000\ufeff]+ }
   newline[@export] { $[\r\n\u2028\u2029] }
+
+  LineComment { "//" ![\n]* }
+
+  // FIXME line beggining.
+  SharpComment { "#" ![\n]* }
+
+  BlockComment { "/*" blockCommentRest }
+  blockCommentRest { ![*] blockCommentRest | "*" blockCommentAfterStar }
+  blockCommentAfterStar { "/" | "*" blockCommentAfterStar | ![/*] blockCommentRest }
 
   alphabetic { $[a-zA-Z\u{200}-\u{377}] }
   underscores { "_" }
@@ -101,5 +110,5 @@ kwsubgraph[@name=subgraph] { @specialize<Simpleid, "subgraph"> }
 
   edgeop[@name=edgeop] { "->" | "--" }
 
-  "{" "}" "[" "]" "," ";"
+  "{" "}" "[" "]" "," ";" "="
 }

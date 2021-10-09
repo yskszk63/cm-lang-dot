@@ -34,3 +34,5 @@ yarn-error.log*
 .vercel
 .next/
 dist/
+packages/lezer-dot/src/parser.js
+packages/lezer-dot/src/parser.terms.js

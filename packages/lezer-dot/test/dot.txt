@@ -125,3 +125,26 @@ graph T { { a -- b } }
 ==>
 
 Graph(graph,ID(Simpleid),"{",Subgraph("{",EdgeStmt(ID(Simpleid),edgeop,ID(Simpleid)),"}"),"}")
+
+# line comment
+
+// comment
+graph {}
+
+==>
+Graph(LineComment, graph)
+
+# block comment
+
+graph { /* a -> b */}
+
+==>
+Graph(graph, BlockComment)
+
+# sharp comment
+
+# comment
+graph {}
+
+==>
+Graph(SharpComment, graph)
