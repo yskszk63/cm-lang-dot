@@ -1,12 +1,13 @@
 import {parser} from "lezer-dot"
 import {LRLanguage, LanguageSupport, indentNodeProp} from "@codemirror/language"
 import {styleTags, tags as t} from "@codemirror/highlight"
+import {complete} from "./completion";
 
 export const dotLanguage = LRLanguage.define({
   parser: parser.configure({
     props: [
       indentNodeProp.add({
-        "Graph Subgraph": cx => cx.baseIndent + cx.unit,
+        StmtList: cx => cx.baseIndent + cx.unit,
       }),
       styleTags({
         "graph digraph node edge strict subgraph": t.keyword,
@@ -30,5 +31,7 @@ export const dotLanguage = LRLanguage.define({
 });
 
 export function dot(_config: unknown = {}) {
-  return new LanguageSupport(dotLanguage, dotLanguage.data.of({ }));
+  return new LanguageSupport(dotLanguage, dotLanguage.data.of({
+    autocomplete: complete,
+  }));
 }

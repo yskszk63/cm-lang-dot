@@ -4,7 +4,7 @@ graph { }
 
 ==>
 
-Graph(graph)
+Graph(graph, StmtList)
 
 # minimum with id
 
@@ -12,7 +12,7 @@ graph id { }
 
 ==>
 
-Graph(graph,ID(Simpleid),"{","}")
+Graph(graph, ID(Simpleid), StmtList)
 
 # minimum with quoted id
 
@@ -20,7 +20,7 @@ graph "\"" { }
 
 ==>
 
-Graph(graph,ID(Quoted),"{","}")
+Graph(graph, ID(Quoted), StmtList)
 
 # minimum with numeral id
 
@@ -28,7 +28,7 @@ graph 3.14 { }
 
 ==>
 
-Graph(graph,ID(Numeral),"{","}")
+Graph(graph, ID(Numeral), StmtList)
 
 # minimum with html id
 
@@ -36,7 +36,7 @@ graph <html> { }
 
 ==>
 
-Graph(graph,ID(Htmlstr),"{","}")
+Graph(graph, ID(Htmlstr), StmtList)
 
 # with node_stmt
 
@@ -44,7 +44,7 @@ graph T { n }
 
 ==>
 
-Graph(graph,ID(Simpleid),"{",NodeStmt(ID(Simpleid)),"}")
+Graph(graph, ID(Simpleid), StmtList(NodeStmt(ID(Simpleid))))
 
 # with node_stmt with port
 
@@ -52,7 +52,7 @@ graph T { n:p }
 
 ==>
 
-Graph(graph,ID(Simpleid),"{",NodeStmt(ID(Simpleid),ID(Simpleid)),"}")
+Graph(graph, ID(Simpleid), StmtList(NodeStmt(ID(Simpleid),ID(Simpleid))))
 
 # with node_stmt with port and compass
 
@@ -60,7 +60,7 @@ graph T { n:p:n }
 
 ==>
 
-Graph(graph,ID(Simpleid),"{",NodeStmt(ID(Simpleid),ID(Simpleid),CompassPt),"}")
+Graph(graph, ID(Simpleid), StmtList(NodeStmt(ID(Simpleid), ID(Simpleid), CompassPt)))
 
 # with edge_stmt
 
@@ -68,7 +68,7 @@ graph T { n -> ne }
 
 ==>
 
-Graph(graph,ID(Simpleid),"{",EdgeStmt(ID(Simpleid),edgeop,ID(Simpleid)),"}")
+Graph(graph,ID(Simpleid), StmtList(EdgeStmt(ID(Simpleid), edgeop, ID(Simpleid))))
 
 # with edge_stmt with subgraph
 
@@ -76,7 +76,7 @@ graph T { {} -> {} }
 
 ==>
 
-Graph(graph,ID(Simpleid),"{",EdgeStmt(Subgraph("{","}"),edgeop,Subgraph("{","}")),"}")
+Graph(graph, ID(Simpleid), StmtList(EdgeStmt(Subgraph(StmtList), edgeop, Subgraph(StmtList))))
 
 # with edge_stmt with attr
 
@@ -84,7 +84,7 @@ graph T { n -> ne [color=blue] }
 
 ==>
 
-Graph(graph,ID(Simpleid),"{",EdgeStmt(ID(Simpleid),edgeop,ID(Simpleid),Attr(ID(Simpleid),ID(Simpleid))),"}")
+Graph(graph, ID(Simpleid), StmtList(EdgeStmt(ID(Simpleid), edgeop, ID(Simpleid), AttrList(Attr(ID(Simpleid), ID(Simpleid))))))
 
 # with attr_stmt graph
 
@@ -92,7 +92,7 @@ graph T { graph [color=blue] }
 
 ==>
 
-Graph(graph,ID(Simpleid),"{",AttrStmt(graph,Attr(ID(Simpleid),ID(Simpleid))),"}")
+Graph(graph, ID(Simpleid), StmtList(AttrStmt(graph, AttrList(Attr(ID(Simpleid), ID(Simpleid))))))
 
 # with attr_stmt edge
 
@@ -100,7 +100,7 @@ graph T { edge [color=blue] }
 
 ==>
 
-Graph(graph,ID(Simpleid),"{",AttrStmt(edge,Attr(ID(Simpleid),ID(Simpleid))),"}")
+Graph(graph, ID(Simpleid), StmtList(AttrStmt(edge, AttrList(Attr(ID(Simpleid), ID(Simpleid))))))
 
 # with attr_stmt node
 
@@ -108,7 +108,7 @@ graph T { node [color=blue] }
 
 ==>
 
-Graph(graph,ID(Simpleid),"{",AttrStmt(node,Attr(ID(Simpleid),ID(Simpleid))),"}")
+Graph(graph, ID(Simpleid), StmtList(AttrStmt(node, AttrList(Attr(ID(Simpleid), ID(Simpleid))))))
 
 # with prop
 
@@ -116,7 +116,7 @@ graph T { color=blue }
 
 ==>
 
-Graph(graph,ID(Simpleid),"{",Prop(ID(Simpleid),ID(Simpleid)),"}")
+Graph(graph, ID(Simpleid), StmtList(Prop(ID(Simpleid), ID(Simpleid))))
 
 # with subgraph
 
@@ -124,7 +124,7 @@ graph T { { a -- b } }
 
 ==>
 
-Graph(graph,ID(Simpleid),"{",Subgraph("{",EdgeStmt(ID(Simpleid),edgeop,ID(Simpleid)),"}"),"}")
+Graph(graph, ID(Simpleid), StmtList(Subgraph(StmtList(EdgeStmt(ID(Simpleid), edgeop, ID(Simpleid))))))
 
 # line comment
 
@@ -132,14 +132,14 @@ Graph(graph,ID(Simpleid),"{",Subgraph("{",EdgeStmt(ID(Simpleid),edgeop,ID(Simple
 graph {}
 
 ==>
-Graph(LineComment, graph)
+Graph(LineComment, graph, StmtList)
 
 # block comment
 
 graph { /* a -> b */}
 
 ==>
-Graph(graph, BlockComment)
+Graph(graph, StmtList(BlockComment))
 
 # sharp comment
 
@@ -147,4 +147,4 @@ Graph(graph, BlockComment)
 graph {}
 
 ==>
-Graph(SharpComment, graph)
+Graph(SharpComment, graph, StmtList)

@@ -1,11 +1,11 @@
 // https://graphviz.org/doc/info/lang.html
 
 @top Graph {
-  kwstrict? (kwgraph | kwdigraph) ID? "{" stmt_list "}"
+  kwstrict? (kwgraph | kwdigraph) ID? StmtList
 }
 
-stmt_list {
-  (stmt ";"?)*
+StmtList {
+  "{" (stmt ";"?)* "}"
 }
 
 stmt[@isGroup=Stmt] {
@@ -17,10 +17,10 @@ stmt[@isGroup=Stmt] {
 }
 
 AttrStmt {
-  (kwgraph | kwnode | kwedge) attr_list
+  (kwgraph | kwnode | kwedge) AttrList
 }
 
-attr_list {
+AttrList {
   ("[" a_list? "]")+
 }
 
@@ -29,7 +29,7 @@ a_list {
 }
 
 EdgeStmt {
-  (node_id | Subgraph) edgeRHS attr_list?
+  (node_id | Subgraph) edgeRHS AttrList?
 }
 
 edgeRHS {
@@ -37,7 +37,7 @@ edgeRHS {
 }
 
 NodeStmt {
-  node_id attr_list?
+  node_id AttrList?
 }
 
 node_id {
@@ -54,7 +54,7 @@ CompassPt {
 }
 
 Subgraph {
-  (kwsubgraph ID?)? "{" stmt_list "}"
+  (kwsubgraph ID?)? StmtList
 }
 
 ID {

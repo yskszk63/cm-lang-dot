@@ -1,7 +1,7 @@
 import {useEffect, useRef} from "react";
 import Head from 'next/head';
 import {EditorState, EditorView, basicSetup} from "@codemirror/basic-setup";
-import {dot} from "lang-dot";
+import {dot} from "cm-lang-dot";
 
 export default function Home() {
   const div = useRef(null);
