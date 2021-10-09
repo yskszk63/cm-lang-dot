@@ -6,11 +6,15 @@ export const dotLanguage = LRLanguage.define({
   parser: parser.configure({
     props: [
       indentNodeProp.add({
-        "graph Subgraph": cx => cx.baseIndent + cx.unit,
+        "Graph Subgraph": cx => cx.baseIndent + cx.unit,
       }),
       styleTags({
         "graph digraph node edge strict subgraph": t.keyword,
+        Simpleid: t.atom,
+        Quoted: t.string,
+        Numeral: t.number,
         ID: t.variableName,
+        edgeop: t.operator,
         "[ ]": t.squareBracket,
         "{ }": t.brace,
         ", ;": t.separator,

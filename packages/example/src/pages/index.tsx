@@ -19,6 +19,7 @@ export default function Home() {
       state,
       parent: div.current,
     });
+    view.focus();
     return () => view.destroy();
   }, [div]);
 
