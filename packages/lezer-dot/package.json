@@ -1,7 +1,7 @@
 {
   "name": "lezer-dot",
   "version": "0.1.0",
-  "description": "",
+  "description": "lezer parser for graphviz dot language.",
   "main": "dist/index.cjs",
   "type": "module",
   "exports": {
@@ -13,7 +13,7 @@
     "build": "mkdirp gen && lezer-generator src/dot.grammar -o gen/parser && rollup -c",
     "test": "mocha test/test-*.js"
   },
-  "author": "",
+  "author": "yskszk63 <yskszk63@gmail.com>",
   "license": "MIT",
   "devDependencies": {
     "@lezer/generator": "^0.15.2",
