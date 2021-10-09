@@ -1,7 +1,7 @@
 import {nodeResolve} from "@rollup/plugin-node-resolve"
 
 export default {
-  input: "./src/parser.js",
+  input: "./gen/parser.js",
   output: [{
     format: "es",
     file: "./dist/index.es.js"
