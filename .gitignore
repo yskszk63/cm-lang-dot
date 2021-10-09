@@ -35,3 +35,4 @@ yarn-error.log*
 .next/
 dist/
 packages/lezer-dot/gen/
+packages/lezer-dot/test/gv-gallery/*.gv.txt

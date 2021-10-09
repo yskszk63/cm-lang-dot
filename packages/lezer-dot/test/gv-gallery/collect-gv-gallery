@@ -1,0 +1,6 @@
+#!/bin/bash
+
+dir=$(dirname $0)
+
+cd $dir
+curl -sSf 'https://graphviz.org/gallery/'|htmlq 'aside li a.td-sidebar-link__page' -a href|sed -e's/\.html/.gv.txt/g' -e's@^@https://graphviz.org@'|xargs -n1 curl -sfO

@@ -1,0 +1,8 @@
+#!/bin/bash
+
+dir=$(dirname $0)
+
+for fp in $dir/*.gv.txt; do
+    sname=$(basename $fp .gv.txt)
+    cat <(echo '# ' $sname; echo) $fp <(echo; echo '==> Graph(...)') > $dir/$sname.txt
+done
