@@ -1,0 +1,22 @@
+// curl 'https://graphviz.org/docs/attr-types/arrowType/' | htmlq 'main table code' --text | sed -e's/^/"/g' -e's/$/",/g'|wl-copy
+export default [
+"normal",
+"inv",
+"dot",
+"invdot",
+"odot",
+"invodot",
+"none",
+"tee",
+"empty",
+"invempty",
+"diamond",
+"odiamond",
+"ediamond",
+"crow",
+"box",
+"obox",
+"open",
+"halfopen",
+"vee",
+] as string[];
