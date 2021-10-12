@@ -12,7 +12,7 @@ stmt[@isGroup=Stmt] {
     NodeStmt
   | EdgeStmt
   | AttrStmt
-  | Prop { ID "=" ID }
+  | Prop { AttrName "=" AttrVal }
   | Subgraph
 }
 
@@ -25,22 +25,22 @@ AttrList {
 }
 
 a_list {
-  ( Attr { ID "=" ID } (";" | ",")?)+
+  ( Attr { AttrName "=" AttrVal } (";" | ",")?)+
 }
 
 EdgeStmt {
-  (node_id | Subgraph) edgeRHS AttrList?
+  (NodeId | Subgraph) edgeRHS AttrList?
 }
 
 edgeRHS {
-  (edgeop (node_id | Subgraph))+
+  (edgeop (NodeId | Subgraph))+
 }
 
 NodeStmt {
-  node_id AttrList?
+  NodeId AttrList?
 }
 
-node_id {
+NodeId {
   ID port?
 }
 
@@ -64,6 +64,9 @@ ID {
   | Htmlstr
 }
 
+AttrName { ID }
+AttrVal { ID }
+
 @precedence {
   kwstrict,
   kwgraph,
@@ -81,11 +84,11 @@ kwedge[@name=edge] { @specialize<Simpleid, "edge"> }
 kwnode[@name=node] { @specialize<Simpleid, "node"> }
 kwsubgraph[@name=subgraph] { @specialize<Simpleid, "subgraph"> }
 
-@skip { spaces | newline | LineComment | BlockComment | SharpComment}
+@skip { spaces | LineComment | BlockComment | SharpComment}
 
 @tokens {
-  spaces[@export] { $[\u0009 \u000b\u00a0\u1680\u2000-\u200a\u202f\u205f\u3000\ufeff]+ }
-  newline[@export] { $[\r\n\u2028\u2029] }
+  // https://gitlab.com/graphviz/graphviz/-/blob/df53fb2b60cdd06ad6c5f67167d7aa80b3f0fd7c/lib/cgraph/scan.l#L207
+  spaces[@export] { $[ \t\r\n]+ }
 
   LineComment { "//" ![\n]* }
 

@@ -35,6 +35,10 @@ const nattrs = attrs.filter(a => a.usedby.has("N"));
 const attrbyname = new Map(attrs.map(a => [a.name, a]));
 
 function pos(cx: CompletionContext, near: SyntaxNode): number {
+  if (cx.pos !== near.to) {
+    return cx.pos;
+  }
+
   switch (near.name) {
     case "Simpleid":
       return near.from;
@@ -160,11 +164,11 @@ function completeByType(cx: CompletionContext, near: SyntaxNode, type: string): 
 function completeAttrVal(cx: CompletionContext, near: SyntaxNode): CompletionResult {
   const cursor = near.cursor;
   while (true) {
-    if (!cursor.prev()) {
-      return null;
-    }
     if (cursor.name === "=") {
       break;
+    }
+    if (!cursor.prev()) {
+      return null;
     }
   }
   while (cursor.prev()) {
@@ -187,59 +191,103 @@ function completeAttrVal(cx: CompletionContext, near: SyntaxNode): CompletionRes
 }
 
 function completeInAttrList(cx: CompletionContext, tree: Tree, near: SyntaxNode, current: SyntaxNode): CompletionResult {
-  const cursor = near.cursor;
-  do {
-    switch (cursor.node.name) {
-      case "Simpleid":
-      case "Quoted":
-      case "Numeral":
-      case "Htmlstr":
-        if (cursor.node !== near) {
-          return completeAttrName(cx, near, current);
-        }
-        break;
-      case "[":
-        return completeAttrName(cx, near, current);
-      case "=":
-        return completeAttrVal(cx, near);
-    }
-  } while (cursor.prev());
+  if (near.name === "=") {
+    return completeAttrVal(cx, near);
+  }
 
-  return null;
+  return completeAttrName(cx, near, current);
 }
 
-function completeInStmtList(cx: CompletionContext, tree: Tree, near: SyntaxNode, current: SyntaxNode): CompletionResult {
+function completeInNodeId(cx: CompletionContext, tree: Tree, near: SyntaxNode, current: SyntaxNode): CompletionResult {
+  const ids = []
+  for (let cursor = tree.cursor();cursor.next();) {
+    if (cursor.node.name === 'NodeId') {
+      const { from, to } = cursor.node;
+      if (!(from <= cx.pos && to >= cx.pos)) {
+        const id = cx.state.doc.sliceString(from, to);
+        ids.push({
+          label: id,
+          type: "variable",
+        });
+      }
+    }
+  }
 
   return {
     from: pos(cx, near),
-    options: [
+    options: ids,
+  };
+}
+
+function completeInEdgeStmt(cx: CompletionContext, tree: Tree, near: SyntaxNode, current: SyntaxNode): CompletionResult {
+  if (near.name !== "edgeop") {
+    return null;
+  }
+
+  const ids = []
+  for (let cursor = tree.cursor();cursor.next();) {
+    if (cursor.node.name === 'NodeId') {
+      const { from, to } = cursor.node;
+      if (!(from <= cx.pos && to >= cx.pos)) {
+        const id = cx.state.doc.sliceString(from, to);
+        ids.push({
+          label: id,
+          type: "variable",
+        });
+      }
+    }
+  }
+
+  return {
+    from: pos(cx, near),
+    options: ids,
+  };
+}
+
+function completeInStmtList(cx: CompletionContext, tree: Tree, near: SyntaxNode, current: SyntaxNode): CompletionResult {
+  if (near.name === "=") {
+    return completeAttrVal(cx, near);
+  }
+
+  const ids = []
+  for (let cursor = tree.cursor();cursor.next();) {
+    if (cursor.node.name === 'NodeId') {
+      const { from, to } = cursor.node;
+      if (!(from <= cx.pos && to >= cx.pos)) {
+        const id = cx.state.doc.sliceString(from, to);
+        ids.push({
+          label: id,
+          type: "variable",
+        });
+      }
+    }
+  }
+
+  return {
+    from: pos(cx, near),
+    options: ids.concat([
       snip("node[${attr} = ${val}]", { label: "node", type: "keyword" }),
       snip("graph[${attr} = ${val}]", { label: "graph", type: "keyword" }),
       snip("edge[${attr} = ${val}]", { label: "edge", type: "keyword" }),
       snip("subgraph ${name} {\n\t${}\n}", { label: "subgraph", type: "keyword" }),
-    ].concat(gattrs.map(({name}) => Object.assign({ label: name + " ", type: "keyword", }))),
+    ]).concat(gattrs.map(({name}) => Object.assign({ label: name + " ", type: "keyword", }))),
   };
 }
 
 function completeInGraph(cx: CompletionContext, tree: Tree, near: SyntaxNode, current: SyntaxNode): CompletionResult {
   const cursor = near.cursor;
-  let foundGraph = false;
   let foundStrict = false;
   while (cursor.prev()) {
     switch (cursor.node.name) {
       case "graph":
       case "digraph":
-        foundGraph = true;
-        break;
+        return null;
       case "strict":
         foundStrict = true;
         break;
     }
   }
 
-  if (foundGraph) {
-    return null;
-  }
   return {
     from: pos(cx, near),
     options: foundStrict ? [
@@ -255,16 +303,17 @@ function completeInGraph(cx: CompletionContext, tree: Tree, near: SyntaxNode, cu
 
 export function complete(cx: CompletionContext): CompletionResult | null {
   const tree = syntaxTree(cx.state);
-  const near = tree.resolveInner(cx.pos, -1);
-  console.log("###", tree.resolve(cx.pos, -1)?.name, tree.resolve(cx.pos, 0)?.name, tree.resolve(cx.pos, 1)?.name);
-  console.log("###", tree.resolveInner(cx.pos, -1)?.name, tree.resolveInner(cx.pos, 0)?.name, tree.resolveInner(cx.pos, 1)?.name);
-  console.log(cx.matchBefore(/ */).from, cx.pos);
+  // TODO skip comment
+  const pos = cx.matchBefore(/[ \t\r\n]*/).from;
+  const near = tree.resolveInner(pos, -1);
 
-  const stack = [];
-  for (let node = near; node; node = node.parent) {
-    stack.push(node.name);
-  }
-  console.log(stack.join("/"));
+  (() => {
+    const stack = [];
+    for (let node = near; node; node = node.parent) {
+      stack.push(node.name);
+    }
+    console.log(stack.join("/"));
+  })();
 
   for (let node = near; node; node = node.parent) {
     switch (node.name) {
@@ -278,14 +327,24 @@ export function complete(cx: CompletionContext): CompletionResult | null {
       case "{":
         return null;
 
+      case "AttrVal":
+        if (cx.pos === pos) {
+          // without space.
+          return completeAttrVal(cx, near);
+        }
+        break;
+
+      case "NodeId":
+        return completeInNodeId(cx, tree, near, node);
+
       case "AttrList":
         return completeInAttrList(cx, tree, near, node);
 
+      case "EdgeStmt":
+        return completeInEdgeStmt(cx, tree, near, node);
+
       case "StmtList":
         return completeInStmtList(cx, tree, near, node);
-
-      case "AttrList":
-        return null;
 
       case "Graph":
         return completeInGraph(cx, tree, near, node);
