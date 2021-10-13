@@ -19,10 +19,10 @@
     "@lezer/generator": "^0.15.2",
     "@rollup/plugin-node-resolve": "^13.0.5",
     "mocha": "^9.1.2",
-    "rollup": "^2.58.0"
+    "rollup": "^2.58.0",
+    "mkdirp": "^1.0.4"
   },
   "dependencies": {
-    "@lezer/lr": "^0.15.4",
-    "mkdirp": "^1.0.4"
+    "@lezer/lr": "^0.15.4"
   }
 }

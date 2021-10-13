@@ -44,7 +44,7 @@ graph T { n }
 
 ==>
 
-Graph(graph, ID(Simpleid), StmtList(NodeStmt(ID(Simpleid))))
+Graph(graph, ID(Simpleid), StmtList(NodeStmt(NodeId(ID(Simpleid)))))
 
 # with node_stmt with port
 
@@ -52,7 +52,7 @@ graph T { n:p }
 
 ==>
 
-Graph(graph, ID(Simpleid), StmtList(NodeStmt(ID(Simpleid),ID(Simpleid))))
+Graph(graph, ID(Simpleid), StmtList(NodeStmt(NodeId(ID(Simpleid), ID(Simpleid)))))
 
 # with node_stmt with port and compass
 
@@ -60,7 +60,7 @@ graph T { n:p:n }
 
 ==>
 
-Graph(graph, ID(Simpleid), StmtList(NodeStmt(ID(Simpleid), ID(Simpleid), CompassPt)))
+Graph(graph, ID(Simpleid), StmtList(NodeStmt(NodeId(ID(Simpleid), ID(Simpleid), CompassPt))))
 
 # with edge_stmt
 
@@ -68,7 +68,7 @@ graph T { n -> ne }
 
 ==>
 
-Graph(graph,ID(Simpleid), StmtList(EdgeStmt(ID(Simpleid), edgeop, ID(Simpleid))))
+Graph(graph,ID(Simpleid), StmtList(EdgeStmt(NodeId(ID(Simpleid)), edgeop, NodeId(ID(Simpleid)))))
 
 # with edge_stmt with subgraph
 
@@ -84,7 +84,7 @@ graph T { n -> ne [color=blue] }
 
 ==>
 
-Graph(graph, ID(Simpleid), StmtList(EdgeStmt(ID(Simpleid), edgeop, ID(Simpleid), AttrList(Attr(ID(Simpleid), ID(Simpleid))))))
+Graph(graph, ID(Simpleid), StmtList(EdgeStmt(NodeId(ID(Simpleid)), edgeop, NodeId(ID(Simpleid)), AttrList(Attr(AttrName(ID(Simpleid)), AttrVal(ID(Simpleid)))))))
 
 # with attr_stmt graph
 
@@ -92,7 +92,7 @@ graph T { graph [color=blue] }
 
 ==>
 
-Graph(graph, ID(Simpleid), StmtList(AttrStmt(graph, AttrList(Attr(ID(Simpleid), ID(Simpleid))))))
+Graph(graph, ID(Simpleid), StmtList(AttrStmt(graph, AttrList(Attr(AttrName(ID(Simpleid)), AttrVal(ID(Simpleid)))))))
 
 # with attr_stmt edge
 
@@ -100,7 +100,7 @@ graph T { edge [color=blue] }
 
 ==>
 
-Graph(graph, ID(Simpleid), StmtList(AttrStmt(edge, AttrList(Attr(ID(Simpleid), ID(Simpleid))))))
+Graph(graph, ID(Simpleid), StmtList(AttrStmt(edge, AttrList(Attr(AttrName(ID(Simpleid)), AttrVal(ID(Simpleid)))))))
 
 # with attr_stmt node
 
@@ -108,7 +108,7 @@ graph T { node [color=blue] }
 
 ==>
 
-Graph(graph, ID(Simpleid), StmtList(AttrStmt(node, AttrList(Attr(ID(Simpleid), ID(Simpleid))))))
+Graph(graph, ID(Simpleid), StmtList(AttrStmt(node, AttrList(Attr(AttrName(ID(Simpleid)), AttrVal(ID(Simpleid)))))))
 
 # with prop
 
@@ -116,7 +116,7 @@ graph T { color=blue }
 
 ==>
 
-Graph(graph, ID(Simpleid), StmtList(Prop(ID(Simpleid), ID(Simpleid))))
+Graph(graph, ID(Simpleid), StmtList(Prop(AttrName(ID(Simpleid)), AttrVal(ID(Simpleid)))))
 
 # with subgraph
 
@@ -124,7 +124,7 @@ graph T { { a -- b } }
 
 ==>
 
-Graph(graph, ID(Simpleid), StmtList(Subgraph(StmtList(EdgeStmt(ID(Simpleid), edgeop, ID(Simpleid))))))
+Graph(graph, ID(Simpleid), StmtList(Subgraph(StmtList(EdgeStmt(NodeId(ID(Simpleid)), edgeop, NodeId(ID(Simpleid)))))))
 
 # line comment
 
