@@ -1,4 +1,4 @@
-import { CompletionContext, CompletionResult, snippetCompletion as snip } from "@codemirror/autocomplete";
+import { CompletionContext, CompletionResult, Completion, snippetCompletion as snip } from "@codemirror/autocomplete";
 import { syntaxTree } from "@codemirror/language";
 import { SyntaxNode, Tree } from "@lezer/common";
 import a from "./attrs";
@@ -10,6 +10,7 @@ class Attr {
   name: string;
   usedby: Set<UsedBy>;
   type: string;
+
   constructor(name: string, usedby: string, type: string) {
     this.name = name;
     this.usedby = new Set(Array.from(usedby, v => {
@@ -26,12 +27,19 @@ class Attr {
     }));
     this.type = type;
   }
+
+  intoCompletion(): Completion {
+    return {
+      label: this.name,
+      type: "keyword",
+    }
+  }
 }
 
 const attrs = a.map(([name, usedby, type]) => new Attr(name, usedby, type));
-const gattrs = attrs.filter(a => a.usedby.has("G"));
-const eattrs = attrs.filter(a => a.usedby.has("E"));
-const nattrs = attrs.filter(a => a.usedby.has("N"));
+const gattrs = attrs.filter(a => a.usedby.has("G")).map(a => a.intoCompletion());
+const eattrs = attrs.filter(a => a.usedby.has("E")).map(a => a.intoCompletion());
+const nattrs = attrs.filter(a => a.usedby.has("N")).map(a => a.intoCompletion());
 const attrbyname = new Map(attrs.map(a => [a.name, a]));
 
 function pos(cx: CompletionContext, near: SyntaxNode): number {
@@ -41,9 +49,9 @@ function pos(cx: CompletionContext, near: SyntaxNode): number {
 
   switch (near.name) {
     case "Simpleid":
-      return near.from;
     case "Quoted":
       return near.from;
+
     default:
       return cx.pos;
   }
@@ -57,17 +65,17 @@ function completeAttrName(cx: CompletionContext, near: SyntaxNode, node: SyntaxN
           case "edge":
             return {
               from: pos(cx, near),
-              options: eattrs.map(({name}) => Object.assign({ label: name + " ", type: "keyword", })),
+              options: eattrs,
             };
           case "graph":
             return {
               from: pos(cx, near),
-              options: gattrs.map(({name}) => Object.assign({ label: name + " ", type: "keyword", })),
+              options: gattrs,
             };
           case "node":
             return {
               from: pos(cx, near),
-              options: nattrs.map(({name}) => Object.assign({ label: name + " ", type: "keyword", })),
+              options: nattrs,
             };
           default:
             return null;
@@ -75,12 +83,12 @@ function completeAttrName(cx: CompletionContext, near: SyntaxNode, node: SyntaxN
       case "NodeStmt":
         return {
           from: pos(cx, near),
-          options: nattrs.map(({name}) => Object.assign({ label: name + " ", type: "keyword", })),
+          options: nattrs,
         };
       case "EdgeStmt":
         return {
           from: pos(cx, near),
-          options: eattrs.map(({name}) => Object.assign({ label: name + " ", type: "keyword", })),
+          options: eattrs,
         };
     }
   }
@@ -244,11 +252,15 @@ function completeInEdgeStmt(cx: CompletionContext, tree: Tree, near: SyntaxNode,
   };
 }
 
-function completeInStmtList(cx: CompletionContext, tree: Tree, near: SyntaxNode, current: SyntaxNode): CompletionResult {
+function completeInProp(cx: CompletionContext, tree: Tree, near: SyntaxNode, current: SyntaxNode): CompletionResult {
   if (near.name === "=") {
     return completeAttrVal(cx, near);
   }
 
+  return null;
+}
+
+function completeInStmtList(cx: CompletionContext, tree: Tree, near: SyntaxNode, current: SyntaxNode): CompletionResult {
   const ids = []
   for (let cursor = tree.cursor();cursor.next();) {
     if (cursor.node.name === 'NodeId') {
@@ -270,7 +282,7 @@ function completeInStmtList(cx: CompletionContext, tree: Tree, near: SyntaxNode,
       snip("graph[${attr} = ${val}]", { label: "graph", type: "keyword" }),
       snip("edge[${attr} = ${val}]", { label: "edge", type: "keyword" }),
       snip("subgraph ${name} {\n\t${}\n}", { label: "subgraph", type: "keyword" }),
-    ]).concat(gattrs.map(({name}) => Object.assign({ label: name + " ", type: "keyword", }))),
+    ]).concat(gattrs),
   };
 }
 
@@ -301,11 +313,28 @@ function completeInGraph(cx: CompletionContext, tree: Tree, near: SyntaxNode, cu
   };
 }
 
+/*
+ * resolve node
+ *
+ * ```
+ * graph { a[label = │] }
+ *                   ^-- cursor
+ *                 ^---- resolve
+ * ```
+ */
+function nearNode(cx: CompletionContext, tree: Tree): SyntaxNode {
+  //const comment = ["LineComment", "SharpComment", "BlockComment"];
+  const skipToken = /[ \t\r\n]*/;
+
+  const pos = cx.matchBefore(skipToken).from;
+  const node = tree.resolveInner(pos, -1);
+  // FIXME skip comments
+  return node;
+}
+
 export function complete(cx: CompletionContext): CompletionResult | null {
   const tree = syntaxTree(cx.state);
-  // TODO skip comment
-  const pos = cx.matchBefore(/[ \t\r\n]*/).from;
-  const near = tree.resolveInner(pos, -1);
+  const near = nearNode(cx, tree);
 
   (() => {
     const stack = [];
@@ -328,14 +357,41 @@ export function complete(cx: CompletionContext): CompletionResult | null {
         return null;
 
       case "AttrVal":
-        if (cx.pos === pos) {
+        if (cx.pos === near.to) {
           // without space.
+          // graph { a[shape = b│] }
+          //                    ^-- cursor
+          //                   ^--- completion target
           return completeAttrVal(cx, near);
         }
+        // skip this case.
+        // graph { a[shape = b │] }
+        //                     ^-- cursor
+        //                    ^--- space
         break;
 
       case "NodeId":
-        return completeInNodeId(cx, tree, near, node);
+        if (cx.pos === node.to && node.parent?.name !== "NodeStmt") {
+          // without space.
+          // graph { aaa; aaa -- a│}
+          //                      ^-- cursor
+          //                     ^--- completion target
+          return completeInNodeId(cx, tree, near, node);
+        }
+        // skip this case.
+        // graph { aaa; aaa -- a │}
+        //                       ^-- cursor
+        //                      ^--- space
+        //
+        // skip because ambiguity.
+        // graph { rrr; r│ } .. maybe enter `rankdir = ..`
+        break;
+
+      case "Prop":
+        // o `graph { rankdir = │ }` .. =/**Prop**/StmtList/Graph
+        // x `graph { r│ }` .. Simpleid/ID/**NodeId**/NodeStmt/StmtList/Graph
+        // x `graph { rankdir = L│ }` .. Simpleid/ID/**AttrVal**/Prop/StmtList/Graph
+        return completeInProp(cx, tree, near, node);
 
       case "AttrList":
         return completeInAttrList(cx, tree, near, node);
