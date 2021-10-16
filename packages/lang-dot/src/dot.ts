@@ -30,8 +30,12 @@ export const dotLanguage = LRLanguage.define({
   },
 });
 
-export function dot(_config: unknown = {}) {
+export type DotConfig = {
+  debug?: true,
+}
+
+export function dot(config: DotConfig = {}) {
   return new LanguageSupport(dotLanguage, dotLanguage.data.of({
-    autocomplete: complete,
+    autocomplete:  complete.bind(null, (config.debug ?? false)),
   }));
 }

@@ -12,7 +12,7 @@ export default function Home() {
     const state = EditorState.create({
       extensions: [
         basicSetup,
-        dot(),
+        dot({debug: true}),
       ],
     });
     const view = new EditorView({

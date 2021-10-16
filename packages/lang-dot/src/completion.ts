@@ -1,4 +1,4 @@
-import { CompletionContext, CompletionResult, Completion, snippetCompletion as snip } from "@codemirror/autocomplete";
+import { CompletionContext, CompletionResult, Completion } from "@codemirror/autocomplete";
 import { syntaxTree } from "@codemirror/language";
 import { SyntaxNode, Tree } from "@lezer/common";
 import a from "./attrs";
@@ -31,7 +31,8 @@ class Attr {
   intoCompletion(): Completion {
     return {
       label: this.name,
-      type: "keyword",
+      type: "property",
+      detail: this.type,
     }
   }
 }
@@ -57,113 +58,69 @@ function pos(cx: CompletionContext, near: SyntaxNode): number {
   }
 }
 
+function result(cx: CompletionContext, near: SyntaxNode, options: Completion[]): CompletionResult {
+  return {
+    from: pos(cx, near),
+    options,
+    span: /\w*$/, // TODO quoted token
+  }
+}
+
 function completeAttrName(cx: CompletionContext, near: SyntaxNode, node: SyntaxNode): CompletionResult {
   while ((node = node.parent) !== null) {
     switch (node.name) {
       case "AttrStmt":
         switch (node.firstChild?.name) {
           case "edge":
-            return {
-              from: pos(cx, near),
-              options: eattrs,
-            };
+            return result(cx, near, eattrs);
           case "graph":
-            return {
-              from: pos(cx, near),
-              options: gattrs,
-            };
+            return result(cx, near, gattrs);
           case "node":
-            return {
-              from: pos(cx, near),
-              options: nattrs,
-            };
+            return result(cx, near, nattrs);
           default:
             return null;
         }
       case "NodeStmt":
-        return {
-          from: pos(cx, near),
-          options: nattrs,
-        };
+        return result(cx, near, nattrs);
       case "EdgeStmt":
-        return {
-          from: pos(cx, near),
-          options: eattrs,
-        };
+        return result(cx, near, eattrs);
     }
   }
 }
 
 function completeByType(cx: CompletionContext, near: SyntaxNode, type: string): CompletionResult {
+  function r(labels: string[]): CompletionResult {
+    return result(cx, near, labels.map(label => Object.assign({ label, type: "text" })));
+  }
+
   switch (type) {
     case "arrowType":
-      return {
-        from: pos(cx, near),
-        options: t.arrowtype.map(label => Object.assign({ label, type: "keyword", })),
-      };
+      return r(t.arrowtype);
     case "bool":
-      return {
-        from: pos(cx, near),
-        options: ["true", "false"].map(label => Object.assign({ label, type: "keyword", })),
-      };
+      return r(["true", "false"]);
     case "clusterMode":
-      return {
-        from: pos(cx, near),
-        options: ['"local"', '"global"', '"none"'].map(label => Object.assign({ label, type: "keyword", })),
-      };
+      return r(['"local"', '"global"', '"none"']);
     case "dirType":
-      return {
-        from: pos(cx, near),
-        options: ['"forward"', '"back"', '"both"', '"none"'].map(label => Object.assign({ label, type: "keyword", })),
-      }
+      return r(['"forward"', '"back"', '"both"', '"none"']);
     case "portPos":
-      return {
-        from: pos(cx, near),
-        options: ["n","ne","e","se","s","sw","w","nw","c","_"].map(label => Object.assign({ label, type: "keyword", })),
-      }
+      return r(["n","ne","e","se","s","sw","w","nw","c","_"]);
     case "outputMode":
-      return {
-        from: pos(cx, near),
-        options: ['"breadthfirst"', '"nodesfirst"', '"edgesfirst"'].map(label => Object.assign({ label, type: "keyword", })),
-      }
+      return r(['"breadthfirst"', '"nodesfirst"', '"edgesfirst"']);
     case "packMode":
-      return {
-        from: pos(cx, near),
-        options: ['"node"', '"clust"', '"graph"'].map(label => Object.assign({ label, type: "keyword", })).concat([
-          snip("array${_flags}${%d}", { label: "array", type: "keyword" }),
-        ]),
-      }
+      return r(['"node"', '"clust"', '"graph"', '"array"']); // FIXME array variant
     case "pagedir":
-      return {
-        from: pos(cx, near),
-        options: t.pagedir.map(label => Object.assign({ label, type: "keyword", })),
-      }
+      return r(t.pagedir);
     case "rankType":
-      return {
-        from: pos(cx, near),
-        options: ['"same"', '"min"', '"source"', '"max"', '"sink"'].map(label => Object.assign({ label, type: "keyword", })),
-      }
+      return r(['"same"', '"min"', '"source"', '"max"', '"sink"']);
     case "rankdir":
-      return {
-        from: pos(cx, near),
-        options: ['"TR"', '"LR"', '"BT"', '"RL"'].map(label => Object.assign({ label, type: "keyword", })),
-      }
+      return r(['"TR"', '"LR"', '"BT"', '"RL"']);
     case "shape":
-      return {
-        from: pos(cx, near),
-        options: t.shape.map(label => Object.assign({ label, type: "keyword", })),
-      }
+      return r(t.shape);
     case "smoothType":
-      return {
-        from: pos(cx, near),
-        options: t.smoothtype.map(label => Object.assign({ label, type: "keyword", })),
-      }
+      return r(t.smoothtype);
     case "style":
       // TODO contextual
-      return {
-        from: pos(cx, near),
-        options: t.style.map(label => Object.assign({ label, type: "keyword", })),
-      }
+      return r(t.style);
     default:
       return null;
   }
@@ -188,6 +145,7 @@ function completeAttrVal(cx: CompletionContext, near: SyntaxNode): CompletionRes
         if (attr) {
           return completeByType(cx, near, attr.type);
         }
+        break;
       }
       case "Quoted":
       case "Htmlstr":
@@ -198,7 +156,38 @@ function completeAttrVal(cx: CompletionContext, near: SyntaxNode): CompletionRes
   return null;
 }
 
-function completeInAttrList(cx: CompletionContext, tree: Tree, near: SyntaxNode, current: SyntaxNode): CompletionResult {
+function completeEdgeop(cx: CompletionContext, tree: Tree, near: SyntaxNode): CompletionResult {
+  const cursor = tree.cursor();
+  while (cursor.next()) {
+    switch (cursor.node.name) {
+    case "graph":
+      return result(cx, near, [{ label: "-" }]);
+    case "digraph":
+      return result(cx, near, [{ label: ">" }]);
+    }
+  }
+}
+
+function completeNodeIds(cx: CompletionContext, tree: Tree): Completion[] {
+  const ids = []
+  for (const cursor = tree.cursor(); cursor.next();) {
+    if (cursor.node.name === 'NodeId') {
+      const { from, to } = cursor.node;
+      if (!(from <= cx.pos && to >= cx.pos)) {
+        const id = cx.state.doc.sliceString(from, to);
+        ids.push({
+          label: id,
+          type: "variable",
+          boost: 1,
+        });
+      }
+    }
+  }
+  return ids;
+
+}
+
+function completeInAttrList(cx: CompletionContext, near: SyntaxNode, current: SyntaxNode): CompletionResult {
   if (near.name === "=") {
     return completeAttrVal(cx, near);
   }
@@ -206,53 +195,21 @@ function completeInAttrList(cx: CompletionContext, tree: Tree, near: SyntaxNode,
   return completeAttrName(cx, near, current);
 }
 
-function completeInNodeId(cx: CompletionContext, tree: Tree, near: SyntaxNode, current: SyntaxNode): CompletionResult {
-  const ids = []
-  for (let cursor = tree.cursor();cursor.next();) {
-    if (cursor.node.name === 'NodeId') {
-      const { from, to } = cursor.node;
-      if (!(from <= cx.pos && to >= cx.pos)) {
-        const id = cx.state.doc.sliceString(from, to);
-        ids.push({
-          label: id,
-          type: "variable",
-        });
-      }
-    }
-  }
-
-  return {
-    from: pos(cx, near),
-    options: ids,
-  };
+function completeInNodeId(cx: CompletionContext, tree: Tree, near: SyntaxNode): CompletionResult {
+  const ids = completeNodeIds(cx, tree);
+  return result(cx, near, ids);
 }
 
-function completeInEdgeStmt(cx: CompletionContext, tree: Tree, near: SyntaxNode, current: SyntaxNode): CompletionResult {
+function completeInEdgeStmt(cx: CompletionContext, tree: Tree, near: SyntaxNode): CompletionResult {
   if (near.name !== "edgeop") {
     return null;
   }
 
-  const ids = []
-  for (let cursor = tree.cursor();cursor.next();) {
-    if (cursor.node.name === 'NodeId') {
-      const { from, to } = cursor.node;
-      if (!(from <= cx.pos && to >= cx.pos)) {
-        const id = cx.state.doc.sliceString(from, to);
-        ids.push({
-          label: id,
-          type: "variable",
-        });
-      }
-    }
-  }
-
-  return {
-    from: pos(cx, near),
-    options: ids,
-  };
+  const ids = completeNodeIds(cx, tree);
+  return result(cx, near, ids);
 }
 
-function completeInProp(cx: CompletionContext, tree: Tree, near: SyntaxNode, current: SyntaxNode): CompletionResult {
+function completeInProp(cx: CompletionContext, near: SyntaxNode): CompletionResult {
   if (near.name === "=") {
     return completeAttrVal(cx, near);
   }
@@ -260,33 +217,23 @@ function completeInProp(cx: CompletionContext, tree: Tree, near: SyntaxNode, cur
   return null;
 }
 
-function completeInStmtList(cx: CompletionContext, tree: Tree, near: SyntaxNode, current: SyntaxNode): CompletionResult {
-  const ids = []
-  for (let cursor = tree.cursor();cursor.next();) {
-    if (cursor.node.name === 'NodeId') {
-      const { from, to } = cursor.node;
-      if (!(from <= cx.pos && to >= cx.pos)) {
-        const id = cx.state.doc.sliceString(from, to);
-        ids.push({
-          label: id,
-          type: "variable",
-        });
-      }
-    }
+function completeInStmtList(cx: CompletionContext, tree: Tree, near: SyntaxNode): CompletionResult {
+  const ids = completeNodeIds(cx, tree);
+  // completion keyword and property name explicit only.
+  if (cx.explicit) {
+    const options = ids.concat([
+      { label: "node", type: "keyword" },
+      { label: "graph", type: "keyword" },
+      { label: "edge", type: "keyword" },
+      { label: "subgraph", type: "keyword" },
+    ]).concat(gattrs);
+    return result(cx, near, options);
+  } else {
+    return result(cx, near, ids);
   }
-
-  return {
-    from: pos(cx, near),
-    options: ids.concat([
-      snip("node[${attr} = ${val}]", { label: "node", type: "keyword" }),
-      snip("graph[${attr} = ${val}]", { label: "graph", type: "keyword" }),
-      snip("edge[${attr} = ${val}]", { label: "edge", type: "keyword" }),
-      snip("subgraph ${name} {\n\t${}\n}", { label: "subgraph", type: "keyword" }),
-    ]).concat(gattrs),
-  };
 }
 
-function completeInGraph(cx: CompletionContext, tree: Tree, near: SyntaxNode, current: SyntaxNode): CompletionResult {
+function completeInGraph(cx: CompletionContext, near: SyntaxNode): CompletionResult {
   const cursor = near.cursor;
   let foundStrict = false;
   while (cursor.prev()) {
@@ -300,17 +247,14 @@ function completeInGraph(cx: CompletionContext, tree: Tree, near: SyntaxNode, cu
     }
   }
 
-  return {
-    from: pos(cx, near),
-    options: foundStrict ? [
-      snip("digraph ${name} {\n\t${}\n}", { label: "digraph", type: "keyword" }),
-      snip("graph ${name} {\n\t${}\n}", { label: "graph", type: "keyword" }),
-    ] : [
-      snip("digraph ${name} {\n\t${}\n}", { label: "digraph", type: "keyword" }),
-      snip("graph ${name} {\n\t${}\n}", { label: "graph", type: "keyword" }),
-      { label: "strict ", type: "keyword" },
-    ],
-  };
+  return result(cx, near, foundStrict ? [
+    { label: "digraph", type: "keyword" },
+    { label: "graph", type: "keyword" },
+  ] : [
+    { label: "digraph", type: "keyword" },
+    { label: "graph", type: "keyword" },
+    { label: "strict", type: "keyword", boost: -1 },
+  ]);
 }
 
 /*
@@ -332,17 +276,19 @@ function nearNode(cx: CompletionContext, tree: Tree): SyntaxNode {
   return node;
 }
 
-export function complete(cx: CompletionContext): CompletionResult | null {
+export function complete(debug: boolean, cx: CompletionContext): CompletionResult | null {
   const tree = syntaxTree(cx.state);
   const near = nearNode(cx, tree);
 
-  (() => {
-    const stack = [];
-    for (let node = near; node; node = node.parent) {
-      stack.push(node.name);
-    }
-    console.log(stack.join("/"));
-  })();
+  if (debug) {
+    (() => {
+      const stack = [];
+      for (let node = near; node; node = node.parent) {
+        stack.push(node.name);
+      }
+      console.log(stack.join("/"));
+    })();
+  }
 
   for (let node = near; node; node = node.parent) {
     switch (node.name) {
@@ -353,8 +299,16 @@ export function complete(cx: CompletionContext): CompletionResult | null {
       case "LineComment":
       case "SharpComment":
       case "BlockComment":
-      case "{":
         return null;
+
+      case "{":
+      case ";":
+        if (cx.pos === near.to && !cx.explicit) {
+          // without space. ignore completion.
+          // graph {│}
+          return null;
+        }
+        break;
 
       case "AttrVal":
         if (cx.pos === near.to) {
@@ -376,7 +330,7 @@ export function complete(cx: CompletionContext): CompletionResult | null {
           // graph { aaa; aaa -- a│}
           //                      ^-- cursor
           //                     ^--- completion target
-          return completeInNodeId(cx, tree, near, node);
+          return completeInNodeId(cx, tree, near);
         }
         // skip this case.
         // graph { aaa; aaa -- a │}
@@ -391,19 +345,33 @@ export function complete(cx: CompletionContext): CompletionResult | null {
         // o `graph { rankdir = │ }` .. =/**Prop**/StmtList/Graph
         // x `graph { r│ }` .. Simpleid/ID/**NodeId**/NodeStmt/StmtList/Graph
         // x `graph { rankdir = L│ }` .. Simpleid/ID/**AttrVal**/Prop/StmtList/Graph
-        return completeInProp(cx, tree, near, node);
+        return completeInProp(cx, near);
 
       case "AttrList":
-        return completeInAttrList(cx, tree, near, node);
+        // graph { graph[│] } .. [/**AttrList**/AttrStmt/StmtList/Graph
+        // graph { graph[r│] } .. Simpleid/ID/AttrName/Attr/**AttrList**/AttrStmt/StmtList/Graph
+        // graph { graph[rankdir =│] } .. =/Attr/**AttrList**/AttrStmt/StmtList/Graph TODO
+        return completeInAttrList(cx, near, node);
 
       case "EdgeStmt":
-        return completeInEdgeStmt(cx, tree, near, node);
+        // x graph { l│ } .. Simpleid/ID/**NodeId**/NodeStmt/StmtList/Graph
+        // x graph { l -│ } .. ⚠/NodeId/NodeStmt/**StmtList**/Graph
+        // o graph { l --│ } .. edgeop/**EdgeStmt**/StmtList/Graph
+        // x graph { l -- r│ } Simpleid/ID/**NodeId**/EdgeStmt/StmtList/Graph
+        return completeInEdgeStmt(cx, tree, near);
 
       case "StmtList":
-        return completeInStmtList(cx, tree, near, node);
+        if (cx.pos === near.to && cx.state.sliceDoc(near.from, near.to) === "-") {
+          // graph { a - } .. ⚠/NodeId/NodeStmt/**StmtList**/Graph
+          return completeEdgeop(cx, tree, near);
+        }
+        // graph { │ } .. {/**StmtList**/Graph
+        // graph { n│ } .. Simpleid/ID/NodeId/NodeStmt/**StmtList**/Graph
+        return completeInStmtList(cx, tree, near);
 
       case "Graph":
-        return completeInGraph(cx, tree, near, node);
+        // │ .. Graph
+        return completeInGraph(cx, near);
     }
   }
 
