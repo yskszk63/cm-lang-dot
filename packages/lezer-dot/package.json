@@ -1,12 +1,13 @@
 {
   "name": "lezer-dot",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "lezer parser for graphviz dot language.",
   "type": "module",
   "exports": {
     "import": "./dist/index.es.js"
   },
   "scripts": {
+    "prepare": "npm run build",
     "build": "mkdirp gen && lezer-generator src/dot.grammar -o gen/parser && rollup -c",
     "test": "mocha test/test-*.js"
   },
@@ -21,5 +22,8 @@
   },
   "dependencies": {
     "@lezer/lr": "^1.0.0"
-  }
+  },
+  "files": [
+    "dist"
+  ]
 }

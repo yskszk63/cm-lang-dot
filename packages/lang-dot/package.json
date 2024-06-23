@@ -1,6 +1,6 @@
 {
   "name": "cm-lang-dot",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "CodeMirror language plugin for graphviz dot language.",
   "scripts": {
     "prepare": "cm-buildhelper src/index.ts",
@@ -27,5 +27,8 @@
   "devDependencies": {
     "@codemirror/buildhelper": "^1.0.0",
     "@lezer/lr": "^1.0.0"
-  }
+  },
+  "files": [
+    "dist/"
+  ]
 }
