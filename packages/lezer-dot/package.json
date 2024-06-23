@@ -1,6 +1,6 @@
 {
   "name": "lezer-dot",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "lezer parser for graphviz dot language.",
   "type": "module",
   "exports": {
