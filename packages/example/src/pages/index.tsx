@@ -1,6 +1,8 @@
 import {useEffect, useRef} from "react";
 import Head from 'next/head';
-import {EditorState, EditorView, basicSetup} from "@codemirror/basic-setup";
+import { basicSetup} from "codemirror";
+import { EditorState } from "@codemirror/state";
+import { EditorView } from "@codemirror/view";
 import {dot} from "cm-lang-dot";
 
 export default function Home() {

@@ -1,8 +1,7 @@
 {
   "name": "cm-lang-dot",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "CodeMirror language plugin for graphviz dot language.",
-  "main": "index.js",
   "scripts": {
     "prepare": "cm-buildhelper src/index.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -16,17 +15,17 @@
   "author": "yskszk63 <yskszk63@gmail.com>",
   "license": "MIT",
   "dependencies": {
-    "lezer-dot": "0.2.0",
-    "@codemirror/autocomplete": "^0.19.13",
-    "@codemirror/highlight": "^0.19.7",
-    "@codemirror/language": "^0.19.7",
-    "@codemirror/lint": "^0.19.3",
-    "@codemirror/state": "^0.19.9",
-    "@codemirror/view": "^0.19.45",
-    "@lezer/common": "^0.15.11"
+    "lezer-dot": "0.3.0",
+    "@codemirror/autocomplete": "^6.0.0",
+    "@codemirror/language": "^6.0.0",
+    "@codemirror/lint": "^6.0.0",
+    "@codemirror/state": "^6.0.0",
+    "@codemirror/view": "^6.0.0",
+    "@lezer/common": "^1.0.0",
+    "@lezer/highlight": "^1.0.0"
   },
   "devDependencies": {
-    "@codemirror/buildhelper": "^0.1.14",
-    "@lezer/lr": "^0.15.8"
+    "@codemirror/buildhelper": "^1.0.0",
+    "@lezer/lr": "^1.0.0"
   }
 }

@@ -62,15 +62,16 @@ function result(cx: CompletionContext, near: SyntaxNode, options: Completion[]):
   return {
     from: pos(cx, near),
     options,
-    span: /\w*$/, // TODO quoted token
+    //span: /\w*$/, // TODO quoted token
   }
 }
 
-function completeAttrName(cx: CompletionContext, near: SyntaxNode, node: SyntaxNode): CompletionResult {
-  while ((node = node.parent) !== null) {
-    switch (node.name) {
+function completeAttrName(cx: CompletionContext, near: SyntaxNode, node: SyntaxNode): CompletionResult | null {
+  let current: SyntaxNode | null = node;
+  while ((current = current.parent) !== null) {
+    switch (current.name) {
       case "AttrStmt":
-        switch (node.firstChild?.name) {
+        switch (current.firstChild?.name) {
           case "edge":
             return result(cx, near, eattrs);
           case "graph":
@@ -86,9 +87,10 @@ function completeAttrName(cx: CompletionContext, near: SyntaxNode, node: SyntaxN
         return result(cx, near, eattrs);
     }
   }
+  return null;
 }
 
-function completeByType(cx: CompletionContext, near: SyntaxNode, type: string): CompletionResult {
+function completeByType(cx: CompletionContext, near: SyntaxNode, type: string): CompletionResult | null {
   function r(labels: string[]): CompletionResult {
     return result(cx, near, labels.map(label => Object.assign({ label, type: "text" })));
   }
@@ -126,8 +128,8 @@ function completeByType(cx: CompletionContext, near: SyntaxNode, type: string): 
   }
 }
 
-function completeAttrVal(cx: CompletionContext, near: SyntaxNode): CompletionResult {
-  const cursor = near.cursor;
+function completeAttrVal(cx: CompletionContext, near: SyntaxNode): CompletionResult | null {
+  const cursor = near.cursor();
   while (true) {
     if (cursor.name === "=") {
       break;
@@ -156,7 +158,7 @@ function completeAttrVal(cx: CompletionContext, near: SyntaxNode): CompletionRes
   return null;
 }
 
-function completeEdgeop(cx: CompletionContext, tree: Tree, near: SyntaxNode): CompletionResult {
+function completeEdgeop(cx: CompletionContext, tree: Tree, near: SyntaxNode): CompletionResult | null {
   const cursor = tree.cursor();
   while (cursor.next()) {
     switch (cursor.node.name) {
@@ -166,10 +168,11 @@ function completeEdgeop(cx: CompletionContext, tree: Tree, near: SyntaxNode): Co
       return result(cx, near, [{ label: ">" }]);
     }
   }
+  return null;
 }
 
 function completeNodeIds(cx: CompletionContext, tree: Tree): Completion[] {
-  const ids = []
+  const ids: Completion[] = []
   for (const cursor = tree.cursor(); cursor.next();) {
     if (cursor.node.name === 'NodeId') {
       const { from, to } = cursor.node;
@@ -187,7 +190,7 @@ function completeNodeIds(cx: CompletionContext, tree: Tree): Completion[] {
 
 }
 
-function completeInAttrList(cx: CompletionContext, near: SyntaxNode, current: SyntaxNode): CompletionResult {
+function completeInAttrList(cx: CompletionContext, near: SyntaxNode, current: SyntaxNode): CompletionResult | null {
   if (near.name === "=") {
     return completeAttrVal(cx, near);
   }
@@ -200,7 +203,7 @@ function completeInNodeId(cx: CompletionContext, tree: Tree, near: SyntaxNode): 
   return result(cx, near, ids);
 }
 
-function completeInEdgeStmt(cx: CompletionContext, tree: Tree, near: SyntaxNode): CompletionResult {
+function completeInEdgeStmt(cx: CompletionContext, tree: Tree, near: SyntaxNode): CompletionResult | null {
   if (near.name !== "edgeop") {
     return null;
   }
@@ -209,7 +212,7 @@ function completeInEdgeStmt(cx: CompletionContext, tree: Tree, near: SyntaxNode)
   return result(cx, near, ids);
 }
 
-function completeInProp(cx: CompletionContext, near: SyntaxNode): CompletionResult {
+function completeInProp(cx: CompletionContext, near: SyntaxNode): CompletionResult | null {
   if (near.name === "=") {
     return completeAttrVal(cx, near);
   }
@@ -233,8 +236,8 @@ function completeInStmtList(cx: CompletionContext, tree: Tree, near: SyntaxNode)
   }
 }
 
-function completeInGraph(cx: CompletionContext, near: SyntaxNode): CompletionResult {
-  const cursor = near.cursor;
+function completeInGraph(cx: CompletionContext, near: SyntaxNode): CompletionResult | null {
+  const cursor = near.cursor();
   let foundStrict = false;
   while (cursor.prev()) {
     switch (cursor.node.name) {
@@ -270,7 +273,8 @@ function nearNode(cx: CompletionContext, tree: Tree): SyntaxNode {
   //const comment = ["LineComment", "SharpComment", "BlockComment"];
   const skipToken = /[ \t\r\n]*/;
 
-  const pos = cx.matchBefore(skipToken).from;
+  const matches = cx.matchBefore(skipToken);
+  const pos = matches !== null ? matches.from : 0; // 0 ... correct ??
   const node = tree.resolveInner(pos, -1);
   // FIXME skip comments
   return node;
@@ -282,15 +286,15 @@ export function complete(debug: boolean, cx: CompletionContext): CompletionResul
 
   if (debug) {
     (() => {
-      const stack = [];
-      for (let node = near; node; node = node.parent) {
+      const stack: string[] = [];
+      for (let node: SyntaxNode | null = near; node; node = node.parent) {
         stack.push(node.name);
       }
       console.log(stack.join("/"));
     })();
   }
 
-  for (let node = near; node; node = node.parent) {
+  for (let node: SyntaxNode | null = near; node; node = node.parent) {
     switch (node.name) {
       case "graph":
       case "digraph":

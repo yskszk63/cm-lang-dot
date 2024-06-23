@@ -1,6 +1,6 @@
 import {parser} from "lezer-dot"
 import {LRLanguage, LanguageSupport, indentNodeProp} from "@codemirror/language"
-import {styleTags, tags as t} from "@codemirror/highlight"
+import {styleTags, tags as t} from "@lezer/highlight";
 import {complete} from "./completion";
 
 export const dotLanguage = LRLanguage.define({
